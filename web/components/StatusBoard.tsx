@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Card } from "@/components/ui/Card";
 
 interface StatusSnapshot {
   data: unknown;
@@ -40,19 +41,24 @@ export function StatusBoard() {
   }, []);
 
   if (error) {
-    return <p>Couldn&apos;t load live status.</p>;
+    return <Card className="text-sm text-red-400">Couldn&apos;t load live status.</Card>;
   }
 
   if (!snapshot?.data) {
-    return <p>No live status yet.</p>;
+    return <Card className="text-sm text-muted">No live status yet.</Card>;
   }
 
   return (
-    <div>
-      <p>Last updated: {new Date(snapshot.updatedAt!).toLocaleTimeString()}</p>
+    <Card>
+      <div className="flex items-center gap-2 text-sm text-moss-400">
+        <span className="h-2 w-2 animate-pulse rounded-full bg-moss-400" />
+        Last updated: {new Date(snapshot.updatedAt!).toLocaleTimeString()}
+      </div>
       {/* Payload shape comes from sfos-core's GetOnDutyCounts() (main SFOS
           repo, not written yet) - rendered raw until that shape is known. */}
-      <pre>{JSON.stringify(snapshot.data, null, 2)}</pre>
-    </div>
+      <pre className="mt-4 overflow-x-auto rounded-md bg-ink p-4 text-sm text-bone">
+        {JSON.stringify(snapshot.data, null, 2)}
+      </pre>
+    </Card>
   );
 }

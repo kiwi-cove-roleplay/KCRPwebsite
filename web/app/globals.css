@@ -1,0 +1,21 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-ink bg-radial-fade text-bone antialiased;
+}
+
+h1,
+h2,
+h3 {
+  @apply font-display tracking-wide;
+}
+
+::selection {
+  @apply bg-moss-600 text-ink;
+}

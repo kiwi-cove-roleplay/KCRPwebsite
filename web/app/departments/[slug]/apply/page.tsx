@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { getDepartmentBySlug } from "@/lib/departments";
 import { ApplicationForm } from "@/components/ApplicationForm";
 import { AuthButton } from "@/components/AuthButton";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Card } from "@/components/ui/Card";
 
 // Reachable by direct link regardless of the department's recruitmentOpen
 // flag - see lib/departments.ts - so the full submission flow can be
@@ -18,19 +20,21 @@ export default async function ApplyPage({ params }: { params: { slug: string } }
   const canApply = Boolean(session) && session?.accountId !== null;
 
   return (
-    <main>
-      <h1>Apply — {department.name}</h1>
+    <div className="mx-auto max-w-xl space-y-8">
+      <PageHeader title={`Apply — ${department.name}`} />
       {canApply ? (
         <ApplicationForm departmentCode={department.code} />
       ) : (
-        <div>
-          <p>
+        <Card className="space-y-4 text-center">
+          <p className="text-sm text-muted">
             Sign in with Discord to apply. If you&apos;ve never connected to the FiveM server,
             do that first — applications require a linked account.
           </p>
-          <AuthButton signedIn={Boolean(session)} />
-        </div>
+          <div className="flex justify-center">
+            <AuthButton signedIn={Boolean(session)} />
+          </div>
+        </Card>
       )}
-    </main>
+    </div>
   );
 }

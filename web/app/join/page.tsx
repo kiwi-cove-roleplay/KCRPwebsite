@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PageHeader } from "@/components/ui/PageHeader";
 
 const STEPS = [
   { title: "Read the rules", body: "Start with the server rules so you know what's expected." },
@@ -9,19 +10,28 @@ const STEPS = [
 
 export default function JoinPage() {
   return (
-    <main>
-      <h1>How to Join</h1>
-      <ol>
-        {STEPS.map((step) => (
-          <li key={step.title}>
-            <strong>{step.title}</strong> — {step.body}
+    <div className="space-y-8">
+      <PageHeader title="How to Join" />
+      <ol className="space-y-4">
+        {STEPS.map((step, index) => (
+          <li key={step.title} className="flex gap-4">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-moss-600/50 text-sm font-semibold text-moss-400">
+              {index + 1}
+            </span>
+            <div>
+              <p className="font-medium text-bone">{step.title}</p>
+              <p className="text-sm text-muted">{step.body}</p>
+            </div>
           </li>
         ))}
       </ol>
-      <p>
+      <p className="text-sm text-muted">
         Interested in an emergency-services role? See{" "}
-        <Link href="/departments">Departments</Link>.
+        <Link href="/departments" className="text-moss-400 hover:underline">
+          Departments
+        </Link>
+        .
       </p>
-    </main>
+    </div>
   );
 }

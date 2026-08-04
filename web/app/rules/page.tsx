@@ -1,3 +1,6 @@
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Card } from "@/components/ui/Card";
+
 // Placeholder copy - replace each section body with the community's actual
 // rules before launch.
 const RULE_SECTIONS = [
@@ -21,15 +24,16 @@ const RULE_SECTIONS = [
 
 export default function RulesPage() {
   return (
-    <main>
-      <h1>Server Rules</h1>
-      <p>The short version. Full rules are pinned in Discord.</p>
-      {RULE_SECTIONS.map((section) => (
-        <section key={section.title}>
-          <h2>{section.title}</h2>
-          <p>{section.body}</p>
-        </section>
-      ))}
-    </main>
+    <div className="space-y-8">
+      <PageHeader title="Server Rules">The short version. Full rules are pinned in Discord.</PageHeader>
+      <div className="grid gap-4 sm:grid-cols-2">
+        {RULE_SECTIONS.map((section) => (
+          <Card key={section.title}>
+            <h2 className="text-lg text-bone">{section.title}</h2>
+            <p className="mt-2 text-sm text-muted">{section.body}</p>
+          </Card>
+        ))}
+      </div>
+    </div>
   );
 }

@@ -2,6 +2,8 @@
 
 import { useState, type FormEvent } from "react";
 import type { DepartmentCode } from "@/lib/portalApi";
+import { buttonClasses } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 
 // Generic field set shared by all departments for now - answers is a
 // flexible JSON column on department_applications specifically so this can
@@ -14,6 +16,10 @@ const FIELDS = [
 ] as const;
 
 type SubmitState = "idle" | "submitting" | "success" | "error";
+
+const TEXTAREA_CLASSES =
+  "mt-1.5 w-full rounded-md border border-line bg-ink px-3 py-2 text-sm text-bone placeholder:text-muted "
+  + "focus:border-moss-500 focus:outline-none focus:ring-1 focus:ring-moss-500";
 
 export function ApplicationForm({ departmentCode }: { departmentCode: DepartmentCode }) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -35,29 +41,38 @@ export function ApplicationForm({ departmentCode }: { departmentCode: Department
   }
 
   if (state === "success") {
-    return <p>Application submitted. Staff will review it and reach out on Discord.</p>;
+    return (
+      <Card className="text-center text-sm text-muted">
+        Application submitted. Staff will review it and reach out on Discord.
+      </Card>
+    );
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      {FIELDS.map((field) => (
-        <div key={field.name}>
-          <label htmlFor={field.name}>{field.label}</label>
-          <br />
-          <textarea
-            id={field.name}
-            required
-            value={answers[field.name] ?? ""}
-            onChange={(event) =>
-              setAnswers((prev) => ({ ...prev, [field.name]: event.target.value }))
-            }
-          />
-        </div>
-      ))}
-      <button type="submit" disabled={state === "submitting"}>
-        {state === "submitting" ? "Submitting..." : "Submit application"}
-      </button>
-      {state === "error" && <p>Something went wrong — try again.</p>}
-    </form>
+    <Card>
+      <form onSubmit={handleSubmit} className="space-y-5">
+        {FIELDS.map((field) => (
+          <div key={field.name}>
+            <label htmlFor={field.name} className="text-sm font-medium text-bone">
+              {field.label}
+            </label>
+            <textarea
+              id={field.name}
+              required
+              rows={3}
+              className={TEXTAREA_CLASSES}
+              value={answers[field.name] ?? ""}
+              onChange={(event) =>
+                setAnswers((prev) => ({ ...prev, [field.name]: event.target.value }))
+              }
+            />
+          </div>
+        ))}
+        <button type="submit" disabled={state === "submitting"} className={buttonClasses("primary", "w-full")}>
+          {state === "submitting" ? "Submitting..." : "Submit application"}
+        </button>
+        {state === "error" && <p className="text-sm text-red-400">Something went wrong — try again.</p>}
+      </form>
+    </Card>
   );
 }
