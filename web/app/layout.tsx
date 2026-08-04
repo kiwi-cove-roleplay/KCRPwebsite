@@ -5,6 +5,7 @@ import Link from "next/link";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { AuthButton } from "@/components/AuthButton";
+import { STAFF_ADMIN_PERMISSION } from "@/lib/requireAdmin";
 import "./globals.css";
 
 const sans = Inter({ subsets: ["latin"], variable: "--font-sans" });
@@ -50,6 +51,14 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
                   className="font-medium text-muted transition-colors hover:text-bone"
                 >
                   My Portal
+                </Link>
+              )}
+              {session?.permissions.includes(STAFF_ADMIN_PERMISSION) && (
+                <Link
+                  href="/admin"
+                  className="font-medium text-muted transition-colors hover:text-bone"
+                >
+                  Admin
                 </Link>
               )}
             </nav>

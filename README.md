@@ -9,8 +9,10 @@ A pnpm workspace with two deployable services:
   site, player portal, admin dashboard, all gated by a Discord-OAuth
   session. Never touches MySQL directly.
 - [`portal-api/`](portal-api/) — Express API, deployed on the game
-  server's VPS. Holds the one MySQL credential and is `web`'s only path to
-  the SFOS database, called server-side over HTTPS with a shared secret.
+  server's Windows Server host (as a Windows Service — see its README)
+  since that's where FXServer runs. Holds the one MySQL credential and is
+  `web`'s only path to the SFOS database, called server-side over HTTPS
+  with a shared secret.
 
 See each service's README for local setup and deployment. This repo is
 intentionally separate from the FiveM/game-server (`SFRP_Core`) repo — see

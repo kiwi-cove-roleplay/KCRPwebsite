@@ -66,6 +66,19 @@ export async function isStaff(accountId: number): Promise<boolean> {
   return rows.length > 0;
 }
 
+// Used to gate every /admin/* route on sfos.staff.admin specifically - not
+// staff_members roster membership (isStaff above), which is separate
+// metadata (title/notes) and doesn't itself grant access. Mirrors
+// sfos-admin's RequireAdmin DB check (server/main.lua) exactly, minus the
+// ACE-group fallback that only makes sense for an in-game bootstrap admin.
+export async function hasPermission(accountId: number, permission: string): Promise<boolean> {
+  const [rows] = await pool.query<mysql.RowDataPacket[]>(
+    "SELECT 1 FROM permission_grants WHERE account_id = ? AND permission = ? LIMIT 1",
+    [accountId, permission],
+  );
+  return rows.length > 0;
+}
+
 export type DepartmentCode = "NZP" | "FENZ" | "HHSJ";
 
 export interface DepartmentApplicationInput {

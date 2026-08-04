@@ -30,8 +30,29 @@ Routes:
   actions — this is only ever a read of the caller's own data, not an
   authorization decision.
 
-Admin dashboard actions land in Phase 4 — see the design doc for the
-overall plan.
+- `/admin/*` — the Phase 4 admin dashboard's backend, mirroring the main
+  SFOS repo's `resources/[admin]/sfos-admin` (`server/db.lua`) for the
+  subset this platform covers: `GET /admin/accounts/search`,
+  `GET/POST /admin/bans`, `POST /admin/bans/:accountId/unban`,
+  `GET/POST /admin/accounts/:accountId/notes`,
+  `GET /admin/permission-catalog`,
+  `GET/POST /admin/accounts/:accountId/permissions`,
+  `DELETE /admin/accounts/:accountId/permissions/:permission`,
+  `GET/POST /admin/staff`, `PATCH/DELETE /admin/staff/:accountId`,
+  `GET /admin/staff-actions`, `GET /admin/applications`,
+  `POST /admin/applications/:id`. Every one of these requires the shared
+  secret *and* an `x-sfos-actor-account-id` header identifying the acting
+  admin — re-checked against `sfos.staff.admin` in `permission_grants` on
+  every single request (see `index.ts`'s `adminRouter` middleware), not
+  trusted from anything cached client-side. `web`'s admin API routes are
+  the only intended source for that header, and they derive it solely from
+  the caller's own session — never from client-submitted input, since a
+  spoofed header here would let a non-admin claim to be any account id.
+  Every mutation logs a `staff_actions` row. The admin routes assume
+  `sfos.staff.admin` has already been granted to at least one account
+  (e.g. through the FiveM `sfos-admin` menu, or a manual `permission_grants`
+  row) — there's no bootstrap path here the way `sfos-admin`'s ACE-group
+  fallback provides in-game.
 
 `POST /applications` depends on a `department_applications` table that
 this service never creates — it's owned by the main SFOS repo's
@@ -50,40 +71,55 @@ database before this endpoint will work.
    for local iteration, or `pnpm --filter sfos-portal-api build && pnpm
    --filter sfos-portal-api start` to run compiled.
 
-## Running on a Linux VPS (production)
+## Running on Windows Server (production)
 
-Same pattern as the main SFOS repo's `services/discord-bot`: run as a
-systemd service so it survives crashes and reboots.
+The game server host here is Windows Server, not Linux, so this runs as a
+Windows Service via [node-windows](https://github.com/coreybutler/node-windows)
+(a devDependency, only ever used by the install script below — never
+imported by `src/index.ts` itself, since merely `require`-ing it throws on
+any non-Windows platform).
 
-```bash
+```powershell
 pnpm install
 pnpm --filter sfos-portal-api build
-sudo bash portal-api/deploy/install.sh
 ```
 
-```bash
-systemctl status sfos-portal-api     # is it running
-journalctl -u sfos-portal-api -f     # live logs
+Then, from an **elevated** (Run as Administrator) PowerShell or cmd:
+
+```powershell
+pnpm --filter sfos-portal-api service:install
 ```
+
+This installs and starts a service named `sfos-portal-api` that restarts
+automatically on crash or reboot. Manage it from `services.msc`, or:
+
+```powershell
+net start sfos-portal-api
+net stop sfos-portal-api
+pnpm --filter sfos-portal-api service:uninstall   # remove it
+```
+
+Logs go to the Windows Event Log (Application) under the service name -
+node-windows wraps stdout/stderr there since there's no journald equivalent.
 
 To deploy an update later:
 
-```bash
+```powershell
 git pull
 pnpm install
 pnpm --filter sfos-portal-api build
-sudo systemctl restart sfos-portal-api
+net stop sfos-portal-api
+net start sfos-portal-api
 ```
 
 ### Reverse proxy (required)
 
-Unlike the main SFOS repo's `services/discord-bot` `/log` endpoint (only
-ever hit by FXServer on `localhost`, so plain HTTP is fine), this API is
-hit by `web` running on Vercel — over the public internet. Put a reverse
-proxy with real TLS in front of it on a subdomain you control (e.g.
-`api.yourdomain.tld`). [Caddy](https://caddyserver.com/) is the simplest
-option — it provisions a Let's Encrypt certificate automatically from a
-one-line config:
+This API is hit by `web` running on Vercel — over the public internet, so
+it needs real TLS in front of it on a subdomain you control (e.g.
+`api.yourdomain.tld`), not the bare HTTP the game server's other
+localhost-only traffic gets away with. [Caddy](https://caddyserver.com/)
+has a native Windows binary and provisions a Let's Encrypt certificate
+automatically from the same one-line config as anywhere else:
 
 ```
 api.yourdomain.tld {
@@ -91,7 +127,18 @@ api.yourdomain.tld {
 }
 ```
 
-Point `web`'s `PORTAL_API_URL` at `https://api.yourdomain.tld`.
+Run `caddy.exe run` with that `Caddyfile`, or wrap Caddy itself as a
+Windows Service the same way (`caddy.exe` has its own `windows-service`
+support - see Caddy's docs). Point `web`'s `PORTAL_API_URL` at
+`https://api.yourdomain.tld`.
+
+### Running on a Linux VPS instead
+
+If `portal-api` ever moves to a Linux host, the same pattern as the main
+SFOS repo's `services/discord-bot` applies: `sudo bash
+portal-api/deploy/install.sh` installs a systemd unit (`systemctl status
+sfos-portal-api`, `journalctl -u sfos-portal-api -f`), and the same Caddy
+config above works unchanged.
 
 ## Auth model
 
@@ -104,11 +151,11 @@ data source and holds nothing sensitive). This API otherwise has no
 browser-facing CORS surface: `web`'s server-side code (API routes / server
 actions) is the only intended caller, and it's responsible for checking
 the actual signed-in user's session/permissions *before* calling here.
-Routes added in later phases that perform privileged actions should
-re-derive the caller's current permissions from the database (given an
-`accountId`), not trust any client-supplied claim — matching the "never
-trust cached/client-supplied authorization" convention used throughout
-this platform.
+`/admin/*` is where this actually happens (Phase 4): every request there
+re-derives `sfos.staff.admin` from `permission_grants` for the
+`x-sfos-actor-account-id` given, on every single call, rather than trusting
+anything cached client-side — matching the "never trust cached/client-
+supplied authorization" convention used throughout this platform.
 
 ## Debug logging
 
