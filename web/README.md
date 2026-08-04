@@ -6,11 +6,18 @@ app gated by session + permission checks. Deployed to Vercel. Talks to the
 game database only indirectly, through the sibling `portal-api` service
 (never holds a MySQL credential itself).
 
-**Phase 1 status**: just Discord login wired end-to-end (NextAuth ->
-`portal-api`'s `/auth/resolve` -> session). No real site content
-yet — `app/page.tsx` is a placeholder that shows your resolved
-account id/staff flag/permissions once signed in, to prove the chain works.
-See the design doc for what's still to come.
+**Phase 2 status**: public pages (landing, rules, how-to-join, department
+overview/detail), a live on-duty status board (`/status`, polling this
+app's own `/api/status`, which proxies portal-api's public `GET /status`),
+and a recruitment application form per department (`/departments/[slug]/
+apply`, posting to `/api/applications`, which requires a signed-in,
+linked-account session and calls portal-api's `POST /applications`).
+Department pages only link to `/apply` when that department's
+`recruitmentOpen` flag (`lib/departments.ts`) is `true` — flip it per
+department once you're ready to accept applications; the apply route
+itself works regardless, for testing. The Phase 1 debug readout (resolved
+account id/staff flag/permissions) moved to `/debug`, not linked from nav.
+Player portal and admin dashboard are later phases — see the design doc.
 
 ## Local setup
 

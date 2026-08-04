@@ -17,9 +17,9 @@ export const config = {
     password: process.env.DB_PASSWORD ?? "",
     database: required("DB_NAME"),
   },
-  // Shared secret checked on every request except /health - the same
-  // server-to-server trust model as the main SFOS repo's
-  // services/discord-bot's /log endpoint (see httpServer.ts's
+  // Shared secret checked on every request except /health and the public
+  // GET /status - the same server-to-server trust model as the main SFOS
+  // repo's services/discord-bot's /log endpoint (see httpServer.ts's
   // x-sfos-log-secret check). Callers are always the web app's server-side
   // code, never a browser directly, so there's no CORS surface to worry
   // about here.

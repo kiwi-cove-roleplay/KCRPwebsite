@@ -4,6 +4,7 @@ import type { PortalCharacter } from "@/lib/portalApi";
 // result, attached in lib/auth.ts's jwt/session callbacks.
 declare module "next-auth" {
   interface Session {
+    discordId: string | null;
     accountId: number | null;
     permissions: string[];
     isStaff: boolean;

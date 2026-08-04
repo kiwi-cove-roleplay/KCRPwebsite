@@ -31,6 +31,7 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
+      session.discordId = token.discordId ?? null;
       session.accountId = token.accountId ?? null;
       session.permissions = token.permissions ?? [];
       session.isStaff = token.isStaff ?? false;

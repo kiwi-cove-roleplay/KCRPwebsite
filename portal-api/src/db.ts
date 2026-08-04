@@ -65,3 +65,26 @@ export async function isStaff(accountId: number): Promise<boolean> {
   );
   return rows.length > 0;
 }
+
+export type DepartmentCode = "NZP" | "FENZ" | "HHSJ";
+
+export interface DepartmentApplicationInput {
+  discordId: string;
+  discordUsername: string;
+  department: DepartmentCode;
+  answers: Record<string, string>;
+}
+
+// department_applications - see database/migrations/
+// 0034_department_applications.sql in the main SFOS repo. Stores
+// discord_identifier/discord_username directly rather than an account_id
+// FK because an applicant only needs to be signed in with Discord, not to
+// have ever connected to the FiveM server.
+export async function insertDepartmentApplication(input: DepartmentApplicationInput): Promise<number> {
+  const [result] = await pool.query<mysql.ResultSetHeader>(
+    "INSERT INTO department_applications (discord_identifier, discord_username, department, answers) "
+      + "VALUES (?, ?, ?, ?)",
+    [input.discordId, input.discordUsername, input.department, JSON.stringify(input.answers)],
+  );
+  return result.insertId;
+}

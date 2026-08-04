@@ -46,3 +46,52 @@ export async function resolvePortalSession(discordId: string): Promise<PortalSes
 
   return (await res.json()) as PortalSession;
 }
+
+export type DepartmentCode = "NZP" | "FENZ" | "HHSJ";
+
+export interface DepartmentApplicationInput {
+  discordId: string;
+  discordUsername: string;
+  department: DepartmentCode;
+  answers: Record<string, string>;
+}
+
+export async function submitDepartmentApplication(input: DepartmentApplicationInput): Promise<void> {
+  const baseUrl = requiredEnv("PORTAL_API_URL");
+  const secret = requiredEnv("PORTAL_API_SECRET");
+
+  const res = await fetch(`${baseUrl}/applications`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-sfos-portal-secret": secret,
+    },
+    body: JSON.stringify(input),
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    throw new Error(`portal-api /applications failed: ${res.status}`);
+  }
+}
+
+export interface StatusSnapshot {
+  data: unknown;
+  updatedAt: string | null;
+}
+
+// GET /status is portal-api's one deliberately public route, but web still
+// proxies it (rather than having the browser hit portal-api directly) so
+// there's exactly one "browser never talks to portal-api" rule, no
+// exceptions - see portal-api's README auth model section.
+export async function fetchStatus(): Promise<StatusSnapshot> {
+  const baseUrl = requiredEnv("PORTAL_API_URL");
+
+  const res = await fetch(`${baseUrl}/status`, { cache: "no-store" });
+
+  if (!res.ok) {
+    throw new Error(`portal-api /status failed: ${res.status}`);
+  }
+
+  return (await res.json()) as StatusSnapshot;
+}

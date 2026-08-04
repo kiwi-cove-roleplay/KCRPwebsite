@@ -7,10 +7,31 @@ sibling `web` app (the community site, deployed on Vercel) never needs a
 MySQL credential or direct network access to the game database. `web`'s
 server-side code is the only intended caller.
 
-Currently exposes one real route, `POST /auth/resolve`, used by `web`'s
-NextAuth sign-in flow to look up an account by Discord id. More routes
-(admin dashboard actions, recruitment applications, live duty status) land
-in later phases — see the design doc for the overall plan.
+Routes (Phase 2):
+
+- `POST /auth/resolve` — used by `web`'s NextAuth sign-in flow to look up
+  an account by Discord id.
+- `POST /applications` — writes a recruitment application row to
+  `department_applications`. Called by `web`'s own `/api/applications`
+  route after it verifies the caller has a session; not built to be called
+  with an unauthenticated Discord id.
+- `GET /status` — **public, no shared secret** — returns the latest
+  on-duty snapshot for the live status board. The only route exempt from
+  the auth model below.
+- `POST /status/report` — upserts that snapshot (shared-secret protected,
+  same as everything but `/status`). Intended caller is a small Lua push
+  in the main SFOS repo's `sfos-core` (not written yet — see the design
+  doc section 5); until that's wired up, `GET /status` just returns
+  `{ data: null, updatedAt: null }`.
+
+Admin dashboard actions land in Phase 4 — see the design doc for the
+overall plan.
+
+`POST /applications` depends on a `department_applications` table that
+this service never creates — it's owned by the main SFOS repo's
+`database/migrations/` (see `0034_department_applications.sql` there).
+Run that migration (or the regenerated `all_migrations.sql`) against the
+database before this endpoint will work.
 
 ## Setup
 
@@ -68,13 +89,16 @@ Point `web`'s `PORTAL_API_URL` at `https://api.yourdomain.tld`.
 
 ## Auth model
 
-Every route except `GET /health` requires an `x-sfos-portal-secret` header
-matching `PORTAL_API_SECRET` — a static shared secret, same trust model as
-the main SFOS repo's `services/discord-bot` `/log` endpoint. This API has
-no browser-facing CORS surface: `web`'s server-side code (API routes /
-server actions) is the only intended caller, and it's responsible for
-checking the actual signed-in user's session/permissions *before* calling
-here. Routes added in later phases that perform privileged actions should
+Every route except `GET /health` and `GET /status` requires an
+`x-sfos-portal-secret` header matching `PORTAL_API_SECRET` — a static
+shared secret, same trust model as the main SFOS repo's
+`services/discord-bot` `/log` endpoint. `GET /status` is the one
+deliberately public, unauthenticated route (it's the live on-duty board's
+data source and holds nothing sensitive). This API otherwise has no
+browser-facing CORS surface: `web`'s server-side code (API routes / server
+actions) is the only intended caller, and it's responsible for checking
+the actual signed-in user's session/permissions *before* calling here.
+Routes added in later phases that perform privileged actions should
 re-derive the caller's current permissions from the database (given an
 `accountId`), not trust any client-supplied claim — matching the "never
 trust cached/client-supplied authorization" convention used throughout
