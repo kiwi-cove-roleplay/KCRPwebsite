@@ -6,18 +6,23 @@ app gated by session + permission checks. Deployed to Vercel. Talks to the
 game database only indirectly, through the sibling `portal-api` service
 (never holds a MySQL credential itself).
 
-**Phase 2 status**: public pages (landing, rules, how-to-join, department
+**Phase 3 status**: public pages (landing, rules, how-to-join, department
 overview/detail), a live on-duty status board (`/status`, polling this
 app's own `/api/status`, which proxies portal-api's public `GET /status`),
-and a recruitment application form per department (`/departments/[slug]/
+a recruitment application form per department (`/departments/[slug]/
 apply`, posting to `/api/applications`, which requires a signed-in,
-linked-account session and calls portal-api's `POST /applications`).
-Department pages only link to `/apply` when that department's
-`recruitmentOpen` flag (`lib/departments.ts`) is `true` — flip it per
-department once you're ready to accept applications; the apply route
-itself works regardless, for testing. The Phase 1 debug readout (resolved
-account id/staff flag/permissions) moved to `/debug`, not linked from nav.
-Player portal and admin dashboard are later phases — see the design doc.
+linked-account session and calls portal-api's `POST /applications`), and a
+player portal (`/portal`, linked from nav only while signed in) showing
+the signed-in player's account, characters, and their own application
+statuses — fetched fresh from portal-api's `POST /portal/summary` on every
+page load, not read off the session token, so a new character or a
+reviewed application shows up without a re-login. Department pages only
+link to `/apply` when that department's `recruitmentOpen` flag
+(`lib/departments.ts`) is `true` — flip it per department once you're
+ready to accept applications; the apply route itself works regardless,
+for testing. The Phase 1 debug readout (resolved account id/staff
+flag/permissions) moved to `/debug`, not linked from nav. The admin
+dashboard is Phase 4 — see the design doc.
 
 ## Local setup
 

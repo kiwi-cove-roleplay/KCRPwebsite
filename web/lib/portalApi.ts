@@ -75,6 +75,45 @@ export async function submitDepartmentApplication(input: DepartmentApplicationIn
   }
 }
 
+export type ApplicationStatus = "pending" | "accepted" | "rejected";
+
+export interface ApplicationSummary {
+  id: number;
+  department: DepartmentCode;
+  status: ApplicationStatus;
+  created_at: string;
+  reviewed_at: string | null;
+}
+
+export interface PortalSummary {
+  characters: PortalCharacter[];
+  applications: ApplicationSummary[];
+}
+
+// Fetched fresh on every /portal page load (not read off the session
+// token) so a new character or a reviewed application shows up without
+// forcing a re-login - see portal-api's /portal/summary comment.
+export async function fetchPortalSummary(accountId: number, discordId: string): Promise<PortalSummary> {
+  const baseUrl = requiredEnv("PORTAL_API_URL");
+  const secret = requiredEnv("PORTAL_API_SECRET");
+
+  const res = await fetch(`${baseUrl}/portal/summary`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-sfos-portal-secret": secret,
+    },
+    body: JSON.stringify({ accountId, discordId }),
+    cache: "no-store",
+  });
+
+  if (!res.ok) {
+    throw new Error(`portal-api /portal/summary failed: ${res.status}`);
+  }
+
+  return (await res.json()) as PortalSummary;
+}
+
 export interface StatusSnapshot {
   data: unknown;
   updatedAt: string | null;

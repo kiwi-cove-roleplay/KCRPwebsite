@@ -7,7 +7,7 @@ sibling `web` app (the community site, deployed on Vercel) never needs a
 MySQL credential or direct network access to the game database. `web`'s
 server-side code is the only intended caller.
 
-Routes (Phase 2):
+Routes:
 
 - `POST /auth/resolve` — used by `web`'s NextAuth sign-in flow to look up
   an account by Discord id.
@@ -23,6 +23,12 @@ Routes (Phase 2):
   in the main SFOS repo's `sfos-core` (not written yet — see the design
   doc section 5); until that's wired up, `GET /status` just returns
   `{ data: null, updatedAt: null }`.
+- `POST /portal/summary` — returns a signed-in player's characters and
+  their own `department_applications` rows, for `web`'s `/portal` page.
+  Takes `{ accountId, discordId }` from the caller's own session, not
+  arbitrary/attacker-controlled input, so — unlike Phase 4's admin
+  actions — this is only ever a read of the caller's own data, not an
+  authorization decision.
 
 Admin dashboard actions land in Phase 4 — see the design doc for the
 overall plan.

@@ -88,3 +88,25 @@ export async function insertDepartmentApplication(input: DepartmentApplicationIn
   );
   return result.insertId;
 }
+
+export type ApplicationStatus = "pending" | "accepted" | "rejected";
+
+export interface ApplicationSummary {
+  id: number;
+  department: DepartmentCode;
+  status: ApplicationStatus;
+  created_at: Date;
+  reviewed_at: Date | null;
+}
+
+// Keyed on discord_identifier, not account_id - matches how rows are
+// written (see insertDepartmentApplication above), and lets someone see
+// their own application history even from before they had an accounts row.
+export async function getApplicationsForDiscordId(discordId: string): Promise<ApplicationSummary[]> {
+  const [rows] = await pool.query<mysql.RowDataPacket[]>(
+    "SELECT id, department, status, created_at, reviewed_at FROM department_applications "
+      + "WHERE discord_identifier = ? ORDER BY created_at DESC",
+    [discordId],
+  );
+  return rows as ApplicationSummary[];
+}

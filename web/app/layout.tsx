@@ -23,6 +23,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             <Link href="/join">How to Join</Link>
             <Link href="/departments">Departments</Link>
             <Link href="/status">Live Status</Link>
+            {session && <Link href="/portal">My Portal</Link>}
           </nav>
           <AuthButton signedIn={Boolean(session)} />
         </header>

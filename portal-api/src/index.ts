@@ -3,6 +3,7 @@ import { config } from "./config.js";
 import {
   getAccountByDiscordId,
   getAllPermissions,
+  getApplicationsForDiscordId,
   getCharactersForAccount,
   insertDepartmentApplication,
   isStaff,
@@ -103,6 +104,37 @@ app.post("/applications", async (req, res) => {
     res.json({ ok: true, id });
   } catch (err) {
     console.error("[sfos-portal-api] /applications failed:", err);
+    res.status(500).json({ ok: false, error: "internal_error" });
+  }
+});
+
+interface PortalSummaryPayload {
+  accountId: number;
+  discordId: string;
+}
+
+// Backs the player portal page (design doc Phase 3) - fetched fresh on
+// every page load rather than reused from the session token, so a
+// character created (or an application reviewed) after sign-in shows up
+// without forcing a re-login. accountId/discordId come from the caller's
+// own session server-side, not attacker-controllable input, so this is
+// only ever a read of the signed-in user's own data - not an
+// authorization decision the way Phase 4's admin actions will be.
+app.post("/portal/summary", async (req, res) => {
+  const payload = req.body as Partial<PortalSummaryPayload>;
+  if (typeof payload?.accountId !== "number" || typeof payload?.discordId !== "string") {
+    res.status(400).json({ ok: false, error: "invalid_payload" });
+    return;
+  }
+
+  try {
+    const [characters, applications] = await Promise.all([
+      getCharactersForAccount(payload.accountId),
+      getApplicationsForDiscordId(payload.discordId),
+    ]);
+    res.json({ characters, applications });
+  } catch (err) {
+    console.error("[sfos-portal-api] /portal/summary failed:", err);
     res.status(500).json({ ok: false, error: "internal_error" });
   }
 });
