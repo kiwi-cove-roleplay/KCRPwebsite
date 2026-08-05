@@ -4,6 +4,12 @@ import { fetchStatus } from "@/lib/portalApi";
 // Public - no session check. Proxies portal-api's equally-public GET
 // /status so the browser only ever talks to this app, never portal-api
 // directly (see lib/portalApi.ts's fetchStatus comment).
+//
+// Forces this route to run per-request rather than be statically
+// optimized - it already does a no-store fetch (fresh status every load),
+// so without this Next throws a DynamicServerError trying to prerender it.
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     const snapshot = await fetchStatus();
