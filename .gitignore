@@ -6,6 +6,7 @@ node_modules/
 # Next.js
 web/.next/
 web/out/
+web/tsconfig.tsbuildinfo
 
 # portal-api build output
 portal-api/dist/
