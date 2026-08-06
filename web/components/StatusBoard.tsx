@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Radio } from "lucide-react";
 import { Card } from "@/components/ui/Card";
+import { IconTile } from "@/components/ui/IconTile";
 
 interface StatusSnapshot {
   data: unknown;
@@ -50,9 +52,14 @@ export function StatusBoard() {
 
   return (
     <Card>
-      <div className="flex items-center gap-2 text-sm text-moss-400">
-        <span className="h-2 w-2 animate-pulse rounded-full bg-moss-400" />
-        Last updated: {new Date(snapshot.updatedAt!).toLocaleTimeString()}
+      <div className="flex items-center gap-3">
+        <IconTile tone="moss" className="h-10 w-10">
+          <Radio className="h-5 w-5" />
+        </IconTile>
+        <div className="flex items-center gap-2 text-sm text-moss-400">
+          <span className="h-2 w-2 animate-pulse rounded-full bg-moss-400" />
+          Last updated: {new Date(snapshot.updatedAt!).toLocaleTimeString()}
+        </div>
       </div>
       {/* Payload shape comes from sfos-core's GetOnDutyCounts() (main SFOS
           repo, not written yet) - rendered raw until that shape is known. */}

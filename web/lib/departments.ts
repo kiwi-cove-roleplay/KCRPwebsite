@@ -52,8 +52,15 @@ export function getDepartmentBySlug(slug: string): DepartmentInfo | undefined {
 
 // Full class strings (not built via template interpolation) so Tailwind's
 // content scan can find them - see tailwind.config.ts's content globs.
-export const DEPARTMENT_ACCENT_CLASSES: Record<DepartmentAccent, { border: string; text: string }> = {
-  blue: { border: "border-t-blue-500", text: "text-blue-400" },
-  red: { border: "border-t-red-500", text: "text-red-400" },
-  amber: { border: "border-t-amber-500", text: "text-amber-400" },
+export const DEPARTMENT_ACCENT_CLASSES: Record<
+  DepartmentAccent,
+  { border: string; text: string; iconBg: string }
+> = {
+  blue: { border: "border-t-blue-500", text: "text-blue-400", iconBg: "bg-gradient-to-br from-blue-500 to-blue-800" },
+  red: { border: "border-t-red-500", text: "text-red-400", iconBg: "bg-gradient-to-br from-red-500 to-red-800" },
+  amber: {
+    border: "border-t-amber-500",
+    text: "text-amber-400",
+    iconBg: "bg-gradient-to-br from-amber-500 to-amber-800",
+  },
 };
