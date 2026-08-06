@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { Flame, HeartPulse, Shield } from "lucide-react";
 import { buttonClasses } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { Card } from "@/components/ui/Card";
 import { DEPARTMENT_ACCENT_CLASSES, getDepartmentBySlug } from "@/lib/departments";
 import type { DepartmentCode } from "@/lib/portalApi";
 
@@ -44,7 +45,32 @@ export default function DepartmentPage({ params }: { params: { slug: string } })
         ))}
       </ul>
 
-      <p className="text-sm text-muted">Rank structure and SOPs go here.</p>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Card>
+          <h2 className="text-lg text-bone">Rank Structure</h2>
+          <ol className="mt-3 space-y-2 text-sm">
+            {department.ranks.map((rank, index) => (
+              <li key={rank} className="flex items-center gap-3 text-muted">
+                <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-bone ${accent.iconBg}`}>
+                  {index + 1}
+                </span>
+                {rank}
+              </li>
+            ))}
+          </ol>
+        </Card>
+        <Card>
+          <h2 className="text-lg text-bone">Requirements to Join</h2>
+          <ul className="mt-3 space-y-2 text-sm text-muted">
+            {department.requirements.map((requirement) => (
+              <li key={requirement} className="flex items-start gap-2">
+                <span className={accent.text}>›</span>
+                {requirement}
+              </li>
+            ))}
+          </ul>
+        </Card>
+      </div>
 
       {department.recruitmentOpen ? (
         <Link href={`/departments/${department.slug}/apply`} className={buttonClasses("primary")}>
