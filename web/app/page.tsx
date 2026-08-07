@@ -1,9 +1,12 @@
 import Link from "next/link";
+import { getServerSession } from "next-auth";
 import { Compass, MapPin, Radio, ScrollText, ShieldCheck } from "lucide-react";
+import { authOptions } from "@/lib/auth";
 import { buttonClasses } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { IconTile, type IconTileTone } from "@/components/ui/IconTile";
 import { Pill } from "@/components/ui/Pill";
+import { GetStartedButton } from "@/components/GetStartedButton";
 
 const QUICK_LINKS = [
   {
@@ -36,7 +39,9 @@ const QUICK_LINKS = [
   },
 ] satisfies { href: string; title: string; body: string; icon: typeof Compass; tone: IconTileTone }[];
 
-export default function HomePage() {
+export default async function HomePage() {
+  const session = await getServerSession(authOptions);
+
   return (
     <div className="space-y-20">
       <section className="-mx-4 space-y-6 rounded-3xl bg-hero-glow px-4 py-16 text-center sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
@@ -53,13 +58,33 @@ export default function HomePage() {
           A New Zealand-based FiveM roleplay community, set in Ōtautahi Christchurch.
         </p>
         <div className="flex flex-wrap justify-center gap-4 pt-2">
-          <Link href="/join" className={buttonClasses("primary")}>
-            How to Join
-          </Link>
-          <Link href="/departments" className={buttonClasses("secondary")}>
-            View Departments
-          </Link>
+          {session ? (
+            <>
+              <Link href="/portal" className={buttonClasses("primary")}>
+                Go to My Portal
+              </Link>
+              <Link href="/join" className={buttonClasses("secondary")}>
+                How to Join
+              </Link>
+            </>
+          ) : (
+            <>
+              <GetStartedButton label="Create Account" />
+              <Link href="/join" className={buttonClasses("secondary")}>
+                How to Join
+              </Link>
+            </>
+          )}
         </div>
+        {!session && (
+          <p className="text-xs text-muted">
+            Creating an account just takes a Discord sign-in - by joining, you agree to follow our{" "}
+            <Link href="/rules" className="text-moss-400 hover:underline">
+              rules
+            </Link>
+            .
+          </p>
+        )}
       </section>
 
       <section className="grid gap-4 sm:grid-cols-2">

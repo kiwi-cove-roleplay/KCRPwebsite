@@ -1,9 +1,10 @@
 import { requireAdminActor } from "@/lib/requireAdmin";
-import { listStaff } from "@/lib/adminApi";
+import { listStaff, type StaffRosterRow } from "@/lib/adminApi";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { AppointStaffForm } from "@/components/admin/AppointStaffForm";
 import { StaffRosterTable } from "@/components/admin/StaffRosterTable";
+import { PortalApiUnavailable } from "@/components/admin/PortalApiUnavailable";
 
 export default async function AdminStaffPage() {
   const actorAccountId = await requireAdminActor();
@@ -11,7 +12,12 @@ export default async function AdminStaffPage() {
     return null;
   }
 
-  const staff = await listStaff(actorAccountId);
+  let staff: StaffRosterRow[] | null = null;
+  try {
+    staff = await listStaff(actorAccountId);
+  } catch (error) {
+    console.error("Failed to load staff roster", error);
+  }
 
   return (
     <div className="space-y-8">
@@ -20,10 +26,14 @@ export default async function AdminStaffPage() {
         <h2 className="text-lg text-bone">Appoint Staff</h2>
         <AppointStaffForm />
       </Card>
-      <Card>
-        <h2 className="text-lg text-bone">Current Staff</h2>
-        <StaffRosterTable staff={staff} />
-      </Card>
+      {staff ? (
+        <Card>
+          <h2 className="text-lg text-bone">Current Staff</h2>
+          <StaffRosterTable staff={staff} />
+        </Card>
+      ) : (
+        <PortalApiUnavailable />
+      )}
     </div>
   );
 }

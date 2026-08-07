@@ -4,6 +4,7 @@ import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import type { Prisma } from "@prisma/client";
 import { prisma } from "./prisma";
 import { resolvePortalSession, type PortalSession } from "./portalApi";
+import { STAFF_ADMIN_PERMISSION } from "./permissions";
 
 interface DiscordProfile {
   id: string;
@@ -28,6 +29,41 @@ async function resolvePortalSessionSafely(discordId: string): Promise<PortalSess
     console.error("portal-api /auth/resolve unavailable - continuing as not linked", error);
     return { accountId: null, permissions: [], isStaff: false, characters: [] };
   }
+}
+
+// Temporary escape hatch for standing up the very first admin while
+// portal-api is down/not deployed yet - there's otherwise no bootstrap path
+// (see portal-api's README), since /admin/* always re-derives
+// sfos.staff.admin from the game database on every request, and won't trust
+// anything the website claims about permissions.
+//
+// This does NOT grant real admin authority by itself: it only lets the
+// listed Discord id past this site's own /admin gate (lib/requireAdmin.ts)
+// using the FiveM account id you provide - portal-api's admin endpoints
+// still independently re-check that exact account id against
+// permission_grants before doing anything, so this only "works" for an
+// account that's genuinely already staff there. Unset ADMIN_BYPASS_ACCOUNTS
+// once portal-api is reachable again; there's no reason to leave a
+// hardcoded allowlist in production longer than necessary.
+//
+// Format: "discordId:accountId,discordId2:accountId2"
+interface AdminBypassEntry {
+  discordId: string;
+  accountId: number;
+}
+
+function loadAdminBypass(): AdminBypassEntry[] {
+  const raw = process.env.ADMIN_BYPASS_ACCOUNTS;
+  if (!raw) {
+    return [];
+  }
+  return raw
+    .split(",")
+    .map((pair) => {
+      const [discordId, accountIdRaw] = pair.split(":").map((part) => part.trim());
+      return { discordId, accountId: Number(accountIdRaw) };
+    })
+    .filter((entry): entry is AdminBypassEntry => Boolean(entry.discordId) && Number.isInteger(entry.accountId));
 }
 
 export const authOptions: NextAuthOptions = {
@@ -73,14 +109,23 @@ export const authOptions: NextAuthOptions = {
       }
       const discordId = account.providerAccountId;
       const resolved = await resolvePortalSessionSafely(discordId);
+      const bypass = loadAdminBypass().find((entry) => entry.discordId === discordId);
+
+      const gameAccountId = resolved.accountId ?? bypass?.accountId ?? null;
+      const isStaff = resolved.isStaff || Boolean(bypass);
+      const permissions =
+        bypass && !resolved.permissions.includes(STAFF_ADMIN_PERMISSION)
+          ? [...resolved.permissions, STAFF_ADMIN_PERMISSION]
+          : resolved.permissions;
+
       await prisma.user
         .update({
           where: { id: user.id },
           data: {
             discordId,
-            gameAccountId: resolved.accountId,
-            isStaff: resolved.isStaff,
-            permissions: resolved.permissions,
+            gameAccountId,
+            isStaff,
+            permissions,
             characters: resolved.characters as unknown as Prisma.InputJsonValue,
           },
         })
