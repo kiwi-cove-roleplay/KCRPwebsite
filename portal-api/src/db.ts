@@ -1,5 +1,6 @@
 import mysql from "mysql2/promise";
 import { config } from "./config.js";
+import { logError } from "./logger.js";
 
 // Same MySQL database sfos-core/oxmysql and the main SFOS repo's
 // services/discord-bot read from. This service is read-only against it for
@@ -16,6 +17,11 @@ export const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 5,
 });
+
+// mysql2/promise's Pool type only exposes 'connection'/'acquire'/'release'/
+// 'enqueue' on .on() - 'error' (idle-connection drops, auth failures, etc.)
+// is only typed on the underlying callback-style pool.
+pool.pool.on("error", (err) => logError("db pool", err));
 
 export interface AccountSummary {
   account_id: number;

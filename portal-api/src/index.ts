@@ -1,5 +1,6 @@
 import express from "express";
 import { config } from "./config.js";
+import { logError } from "./logger.js";
 import {
   getAccountByDiscordId,
   getAllPermissions,
@@ -89,7 +90,7 @@ app.post("/auth/resolve", async (req, res) => {
 
     res.json({ accountId: account.account_id, permissions, isStaff: staff, characters });
   } catch (err) {
-    console.error("[sfos-portal-api] /auth/resolve failed:", err);
+    logError("/auth/resolve", err);
     res.status(500).json({ ok: false, error: "internal_error" });
   }
 });
@@ -127,7 +128,7 @@ app.post("/applications", async (req, res) => {
     const id = await insertDepartmentApplication(payload);
     res.json({ ok: true, id });
   } catch (err) {
-    console.error("[sfos-portal-api] /applications failed:", err);
+    logError("/applications", err);
     res.status(500).json({ ok: false, error: "internal_error" });
   }
 });
@@ -158,7 +159,7 @@ app.post("/portal/summary", async (req, res) => {
     ]);
     res.json({ characters, applications });
   } catch (err) {
-    console.error("[sfos-portal-api] /portal/summary failed:", err);
+    logError("/portal/summary", err);
     res.status(500).json({ ok: false, error: "internal_error" });
   }
 });
@@ -198,7 +199,7 @@ adminRouter.use(async (req, res, next) => {
       return;
     }
   } catch (err) {
-    console.error("[sfos-portal-api] admin auth check failed:", err);
+    logError("admin auth check", err);
     res.status(500).json({ ok: false, error: "internal_error" });
     return;
   }
