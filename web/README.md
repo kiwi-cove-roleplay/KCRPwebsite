@@ -24,6 +24,20 @@ left at "not linked" (`accountId: null` in the session) until a later
 sign-in resolves successfully. Nothing about the portal-api round trip can
 block or break signing in to the website itself.
 
+### Bootstrapping the first admin
+
+`/admin` is gated on `sfos.staff.admin`, which only ever comes from
+portal-api re-deriving it from the game database's `permission_grants`
+table — there's no bootstrap path there (see portal-api's README). If
+portal-api isn't deployed/reachable yet but you already know your account
+is staff in the game database, set `ADMIN_BYPASS_ACCOUNTS` (see
+`.env.example`) to get past this site's own `/admin` gate in the meantime.
+Sign out and back in for it to take effect (it's applied in
+`events.signIn`). This is explicitly temporary — portal-api's admin
+endpoints still independently re-check the real `permission_grants` table
+for that account id before doing anything, so it can't grant authority
+that doesn't already exist there; unset it once portal-api is reachable.
+
 **Phase 3 status**: public pages (landing, rules, how-to-join, department
 overview/detail), a live on-duty status board (`/status`, polling this
 app's own `/api/status`, which proxies portal-api's public `GET /status`),
