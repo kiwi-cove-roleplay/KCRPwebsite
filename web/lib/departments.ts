@@ -14,6 +14,11 @@ export interface DepartmentInfo {
   // app/departments/[slug]/apply/page.tsx - so staff can exercise the full
   // submission flow before advertising it.
   recruitmentOpen: boolean;
+  // Placeholder rank ladder and entry requirements shown on the department
+  // detail page - replace with the community's actual structure before
+  // launch, same as rules/page.tsx's RULE_SECTIONS.
+  ranks: string[];
+  requirements: string[];
 }
 
 export const DEPARTMENTS: DepartmentInfo[] = [
@@ -25,6 +30,13 @@ export const DEPARTMENTS: DepartmentInfo[] = [
     features: ["Patrol & investigations", "AOS tactical response", "Structured rank progression"],
     accent: "blue",
     recruitmentOpen: false,
+    ranks: ["Recruit Constable", "Constable", "Senior Constable", "Sergeant", "Senior Sergeant", "Inspector"],
+    requirements: [
+      "Linked Discord and FiveM account in good standing",
+      "Clean in-character record for at least 7 days",
+      "Comfortable with radio codes and basic RP procedure",
+      "Available for at least one shift per week once appointed",
+    ],
   },
   {
     code: "FENZ",
@@ -34,6 +46,13 @@ export const DEPARTMENTS: DepartmentInfo[] = [
     features: ["Structure fire response", "Road crash rescue", "Hazmat & rescue ops"],
     accent: "red",
     recruitmentOpen: false,
+    ranks: ["Recruit Firefighter", "Firefighter", "Senior Firefighter", "Station Officer", "Senior Station Officer"],
+    requirements: [
+      "Linked Discord and FiveM account in good standing",
+      "Willingness to train on apparatus and rescue tools in-character",
+      "Comfortable working alongside Police and St John on scene",
+      "Available for at least one shift per week once appointed",
+    ],
   },
   {
     code: "HHSJ",
@@ -43,6 +62,13 @@ export const DEPARTMENTS: DepartmentInfo[] = [
     features: ["Emergency medical response", "Ambulance operations", "Hospital & triage RP"],
     accent: "amber",
     recruitmentOpen: false,
+    ranks: ["Trainee EMT", "EMT", "Paramedic", "Senior Paramedic", "Shift Supervisor"],
+    requirements: [
+      "Linked Discord and FiveM account in good standing",
+      "Comfortable with medical roleplay and treatment procedure",
+      "Willingness to train on triage and transport protocol",
+      "Available for at least one shift per week once appointed",
+    ],
   },
 ];
 
