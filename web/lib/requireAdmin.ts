@@ -1,7 +1,8 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { STAFF_ADMIN_PERMISSION } from "@/lib/permissions";
 
-export const STAFF_ADMIN_PERMISSION = "sfos.staff.admin";
+export { STAFF_ADMIN_PERMISSION } from "@/lib/permissions";
 
 // Fast session-level gate so an unauthorized caller gets a 403 without a
 // round trip to portal-api. Not the authoritative check - portal-api's

@@ -1,7 +1,8 @@
 import { requireAdminActor } from "@/lib/requireAdmin";
-import { listStaffActions } from "@/lib/adminApi";
+import { listStaffActions, type StaffActionRow } from "@/lib/adminApi";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Card } from "@/components/ui/Card";
+import { PortalApiUnavailable } from "@/components/admin/PortalApiUnavailable";
 
 export default async function AdminAuditLogPage() {
   const actorAccountId = await requireAdminActor();
@@ -9,7 +10,21 @@ export default async function AdminAuditLogPage() {
     return null;
   }
 
-  const actions = await listStaffActions(actorAccountId);
+  let actions: StaffActionRow[] | null = null;
+  try {
+    actions = await listStaffActions(actorAccountId);
+  } catch (error) {
+    console.error("Failed to load staff action audit log", error);
+  }
+
+  if (!actions) {
+    return (
+      <div className="space-y-8">
+        <PageHeader title="Staff Action Audit Log" />
+        <PortalApiUnavailable />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">

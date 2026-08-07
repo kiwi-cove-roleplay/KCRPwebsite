@@ -15,7 +15,7 @@ export default function JoinPage() {
       <ol className="space-y-4">
         {STEPS.map((step, index) => (
           <li key={step.title} className="flex gap-4">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-moss-600/50 text-sm font-semibold text-moss-400">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-primary text-sm font-semibold text-bone shadow-glow-sm">
               {index + 1}
             </span>
             <div>
