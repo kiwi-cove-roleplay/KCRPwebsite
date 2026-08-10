@@ -4,19 +4,19 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card } from "@/components/ui/Card";
 import { buttonClasses } from "@/components/ui/Button";
-import type { ApplicationReviewRow } from "@/lib/adminApi";
+import type { ApplicationRow } from "@/lib/applications";
 
 export function ApplicationsQueue({
   applications,
   showActions,
 }: {
-  applications: ApplicationReviewRow[];
+  applications: ApplicationRow[];
   showActions: boolean;
 }) {
   const router = useRouter();
-  const [pending, setPending] = useState<number | null>(null);
+  const [pending, setPending] = useState<string | null>(null);
 
-  async function handleReview(id: number, status: "accepted" | "rejected") {
+  async function handleReview(id: string, status: "accepted" | "rejected") {
     setPending(id);
     try {
       await fetch(`/api/admin/applications/${id}`, {

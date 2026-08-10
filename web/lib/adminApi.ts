@@ -186,6 +186,11 @@ export interface ApplicationReviewRow {
   reviewed_by_name: string | null;
 }
 
+// listApplications/updateApplicationStatus below are not currently called
+// from web - admin/applications/page.tsx reads/reviews from this website's
+// own database instead (see lib/applications.ts), so the queue works
+// without a reachable game server. Kept for the later-date task of
+// reconciling with portal-api's department_applications table.
 export function listApplications(actorAccountId: number, status?: ApplicationStatus): Promise<ApplicationReviewRow[]> {
   return adminFetch(actorAccountId, status ? `/applications?status=${status}` : "/applications");
 }

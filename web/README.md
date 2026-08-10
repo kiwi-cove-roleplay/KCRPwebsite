@@ -38,6 +38,27 @@ endpoints still independently re-check the real `permission_grants` table
 for that account id before doing anything, so it can't grant authority
 that doesn't already exist there; unset it once portal-api is reachable.
 
+## What works without a game server
+
+Everything native to the website works with just this app's own Postgres
+database — no portal-api or FiveM server required:
+
+- Signing in / creating a website account (above).
+- `/portal` — always shows account info; degrades only the
+  game-specific "Characters" section to a "not connected yet" message.
+- Applying to a department (`/departments/[slug]/apply`) and reviewing
+  applications (`/admin/applications`) — recruitment applications live
+  entirely in this database (`prisma/schema.prisma`'s `Application` model,
+  `lib/applications.ts`), a deliberately separate table from the main SFOS
+  repo's `department_applications` (MySQL, behind portal-api). Reconciling
+  the two is a later-date task, not something either side depends on today.
+
+What's inherently game-linked and stays unavailable until portal-api is
+reachable: game account linking/permissions/staff status, characters, bans,
+staff roster, and the live on-duty status board. Those pages/sections show
+a clear "can't reach the game server" message (`PortalApiUnavailable`)
+instead of erroring.
+
 **Phase 3 status**: public pages (landing, rules, how-to-join, department
 overview/detail), a live on-duty status board (`/status`, polling this
 app's own `/api/status`, which proxies portal-api's public `GET /status`),

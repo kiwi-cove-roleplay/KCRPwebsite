@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/Badge";
 import { BanControls } from "@/components/admin/BanControls";
 import { PlayerNotes } from "@/components/admin/PlayerNotes";
 import { PermissionsEditor } from "@/components/admin/PermissionsEditor";
-import { PortalApiUnavailable } from "@/components/admin/PortalApiUnavailable";
+import { PortalApiUnavailable } from "@/components/PortalApiUnavailable";
 
 export default async function AdminAccountDetailPage({ params }: { params: { accountId: string } }) {
   const actorAccountId = await requireAdminActor();

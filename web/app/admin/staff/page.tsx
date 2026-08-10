@@ -4,7 +4,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { AppointStaffForm } from "@/components/admin/AppointStaffForm";
 import { StaffRosterTable } from "@/components/admin/StaffRosterTable";
-import { PortalApiUnavailable } from "@/components/admin/PortalApiUnavailable";
+import { PortalApiUnavailable } from "@/components/PortalApiUnavailable";
 
 export default async function AdminStaffPage() {
   const actorAccountId = await requireAdminActor();

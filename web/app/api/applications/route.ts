@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { submitDepartmentApplication, type DepartmentCode } from "@/lib/portalApi";
+import { createApplication } from "@/lib/applications";
+import type { DepartmentCode } from "@/lib/portalApi";
 
 const VALID_DEPARTMENTS: DepartmentCode[] = ["NZP", "FENZ", "HHSJ"];
 
@@ -23,9 +24,12 @@ function isValidBody(body: unknown): body is ApplicationRequestBody {
   );
 }
 
+// Only requires a signed-in website account, not a FiveM/portal-api link -
+// see lib/applications.ts's top comment. A real game-account requirement
+// can come back once that data has somewhere to reconcile to.
 export async function POST(request: Request) {
   const session = await getServerSession(authOptions);
-  if (!session || session.accountId === null || !session.discordId) {
+  if (!session) {
     return NextResponse.json({ ok: false, error: "unauthenticated" }, { status: 401 });
   }
 
@@ -35,12 +39,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    await submitDepartmentApplication({
-      discordId: session.discordId,
-      discordUsername: session.user?.name ?? "unknown",
-      department: body.department,
-      answers: body.answers,
-    });
+    await createApplication(session.websiteUserId, body.department, body.answers);
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("[sfos-web] /api/applications failed:", err);

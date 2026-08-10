@@ -2,7 +2,7 @@ import { requireAdminActor } from "@/lib/requireAdmin";
 import { listStaffActions, type StaffActionRow } from "@/lib/adminApi";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Card } from "@/components/ui/Card";
-import { PortalApiUnavailable } from "@/components/admin/PortalApiUnavailable";
+import { PortalApiUnavailable } from "@/components/PortalApiUnavailable";
 
 export default async function AdminAuditLogPage() {
   const actorAccountId = await requireAdminActor();

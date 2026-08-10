@@ -136,6 +136,7 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async session({ session, user }) {
+      session.websiteUserId = user.id;
       session.discordId = user.discordId ?? null;
       session.accountId = user.gameAccountId ?? null;
       session.permissions = user.permissions ?? [];

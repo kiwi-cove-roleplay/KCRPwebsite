@@ -5,6 +5,11 @@ import type { PortalCharacter } from "@/lib/portalApi";
 // (where it's written) and session callback (where it's read back).
 declare module "next-auth" {
   interface Session {
+    // This website account's own Prisma User.id - distinct from accountId
+    // (the FiveM/game account id, which is null until portal-api resolves
+    // it). Used to attribute website-native data (e.g. Application rows)
+    // to a signed-in visitor regardless of whether they have a game link.
+    websiteUserId: string;
     discordId: string | null;
     accountId: number | null;
     permissions: string[];

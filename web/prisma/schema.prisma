@@ -74,8 +74,36 @@ model User {
   accounts Account[]
   sessions Session[]
 
+  applications         Application[] @relation("ApplicationApplicant")
+  reviewedApplications Application[] @relation("ApplicationReviewer")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// Department recruitment applications, owned entirely by this website
+// database - NOT the same table as the main SFOS repo's
+// department_applications (MySQL, behind portal-api). Submitting and
+// reviewing applications needs to work before there's a reachable game
+// server/portal-api at all, so this is the source of truth for now;
+// reconciling/syncing with the game database's copy is a later-date task,
+// not something this app depends on to function today.
+model Application {
+  id         String    @id @default(cuid())
+  userId     String
+  department String
+  answers    Json
+  status     String    @default("pending")
+  createdAt  DateTime  @default(now())
+  reviewedAt DateTime?
+
+  reviewedByUserId String?
+
+  user       User  @relation("ApplicationApplicant", fields: [userId], references: [id], onDelete: Cascade)
+  reviewedBy User? @relation("ApplicationReviewer", fields: [reviewedByUserId], references: [id])
+
+  @@index([userId])
+  @@index([status])
 }
 
 model VerificationToken {

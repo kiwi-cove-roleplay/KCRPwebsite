@@ -56,6 +56,10 @@ export interface DepartmentApplicationInput {
   answers: Record<string, string>;
 }
 
+// Not currently called from web - applications are submitted to this
+// website's own database instead (see lib/applications.ts) so they work
+// without a reachable game server. Kept for the later-date task of
+// reconciling with portal-api's department_applications table.
 export async function submitDepartmentApplication(input: DepartmentApplicationInput): Promise<void> {
   const baseUrl = requiredEnv("PORTAL_API_URL");
   const secret = requiredEnv("PORTAL_API_SECRET");

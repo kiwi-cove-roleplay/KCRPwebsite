@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { requireAdminActor } from "@/lib/requireAdmin";
-import { listApplications, type ApplicationReviewRow } from "@/lib/adminApi";
+import { listApplicationsForAdmin } from "@/lib/applications";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { ApplicationsQueue } from "@/components/admin/ApplicationsQueue";
-import { PortalApiUnavailable } from "@/components/admin/PortalApiUnavailable";
 import type { ApplicationStatus } from "@/lib/portalApi";
 
 const TABS: { status: ApplicationStatus; label: string }[] = [
@@ -19,12 +18,7 @@ export default async function AdminApplicationsPage({ searchParams }: { searchPa
   }
 
   const status = (searchParams.status as ApplicationStatus | undefined) ?? "pending";
-  let applications: ApplicationReviewRow[] | null = null;
-  try {
-    applications = await listApplications(actorAccountId, status);
-  } catch (error) {
-    console.error("Failed to load applications", error);
-  }
+  const applications = await listApplicationsForAdmin(status);
 
   return (
     <div className="space-y-8">
@@ -40,11 +34,7 @@ export default async function AdminApplicationsPage({ searchParams }: { searchPa
           </Link>
         ))}
       </div>
-      {applications ? (
-        <ApplicationsQueue applications={applications} showActions={status === "pending"} />
-      ) : (
-        <PortalApiUnavailable />
-      )}
+      <ApplicationsQueue applications={applications} showActions={status === "pending"} />
     </div>
   );
 }

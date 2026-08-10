@@ -17,21 +17,17 @@ export default async function ApplyPage({ params }: { params: { slug: string } }
   }
 
   const session = await getServerSession(authOptions);
-  const canApply = Boolean(session) && session?.accountId !== null;
 
   return (
     <div className="mx-auto max-w-xl space-y-8">
       <PageHeader title={`Apply — ${department.name}`} />
-      {canApply ? (
+      {session ? (
         <ApplicationForm departmentCode={department.code} />
       ) : (
         <Card className="space-y-4 text-center">
-          <p className="text-sm text-muted">
-            Sign in with Discord to apply. If you&apos;ve never connected to the FiveM server,
-            do that first — applications require a linked account.
-          </p>
+          <p className="text-sm text-muted">Sign in with Discord to apply.</p>
           <div className="flex justify-center">
-            <AuthButton signedIn={Boolean(session)} />
+            <AuthButton signedIn={false} />
           </div>
         </Card>
       )}

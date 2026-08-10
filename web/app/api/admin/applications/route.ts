@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdminActor } from "@/lib/requireAdmin";
-import { listApplications } from "@/lib/adminApi";
+import { listApplicationsForAdmin } from "@/lib/applications";
 import type { ApplicationStatus } from "@/lib/portalApi";
 
 export async function GET(request: Request) {
@@ -12,7 +12,7 @@ export async function GET(request: Request) {
   const status = new URL(request.url).searchParams.get("status") as ApplicationStatus | null;
 
   try {
-    return NextResponse.json(await listApplications(actorAccountId, status ?? undefined));
+    return NextResponse.json(await listApplicationsForAdmin(status ?? undefined));
   } catch (err) {
     console.error("[sfos-web] /api/admin/applications failed:", err);
     return NextResponse.json({ ok: false, error: "internal_error" }, { status: 502 });
