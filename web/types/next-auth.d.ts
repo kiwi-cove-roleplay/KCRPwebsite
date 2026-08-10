@@ -1,8 +1,9 @@
 import type { PortalCharacter } from "@/lib/portalApi";
 
-// Augments next-auth's Session/User with the portal-api /auth/resolve
-// result cached on the Prisma User row - see lib/auth.ts's events.signIn
-// (where it's written) and session callback (where it's read back).
+// Augments next-auth's Session/User with the portal API's
+// /sfos/portal/auth/resolve result cached on the Prisma User row - see
+// lib/auth.ts's events.signIn (where it's written) and session callback
+// (where it's read back).
 declare module "next-auth" {
   interface Session {
     discordId: string | null;

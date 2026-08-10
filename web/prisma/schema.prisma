@@ -1,10 +1,10 @@
 // Website accounts database - Postgres, owned entirely by `web`. This is
-// deliberately separate from the FiveM/SFOS MySQL database that portal-api
-// sits in front of (see root README's architecture section): signing in
-// with Discord always creates/loads a row here, whether or not that
-// Discord account has ever connected to the FiveM server. portal-api is
-// only consulted afterwards, best-effort, to enrich the account with
-// game-linked data - see lib/auth.ts.
+// deliberately separate from the FiveM/SFOS MySQL database the portal API
+// (FXServer itself) sits in front of (see root README's architecture
+// section): signing in with Discord always creates/loads a row here,
+// whether or not that Discord account has ever connected to the FiveM
+// server. The portal API is only consulted afterwards, best-effort, to
+// enrich the account with game-linked data - see lib/auth.ts.
 //
 // Account/Session/VerificationToken below are the exact shape
 // @next-auth/prisma-adapter requires (https://authjs.dev/reference/adapter/prisma).

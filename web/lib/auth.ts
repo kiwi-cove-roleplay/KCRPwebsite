@@ -15,35 +15,38 @@ interface DiscordProfile {
   image_url?: string;
 }
 
-// portal-api (and the FiveM/SFOS MySQL database behind it) is best-effort
-// enrichment, not a login dependency - a website account (Prisma's User
-// row, created by the adapter below) exists purely from a successful
-// Discord sign-in. If portal-api is unreachable, misconfigured, or the
-// Discord account has never connected to the FiveM server, this just
-// returns the "not linked" shape instead of throwing, so signing in to the
-// website never fails because of it.
+// The portal API (FXServer itself - see the SFRP_Core_2026 repo's
+// resources/[core]/sfos-core/server/http_router.lua and the FiveM/SFOS
+// MySQL database behind it) is best-effort enrichment, not a login
+// dependency - a website account (Prisma's User row, created by the
+// adapter below) exists purely from a successful Discord sign-in. If the
+// portal API is unreachable, misconfigured, or the Discord account has
+// never connected to the FiveM server, this just returns the "not linked"
+// shape instead of throwing, so signing in to the website never fails
+// because of it.
 async function resolvePortalSessionSafely(discordId: string): Promise<PortalSession> {
   try {
     return await resolvePortalSession(discordId);
   } catch (error) {
-    console.error("portal-api /auth/resolve unavailable - continuing as not linked", error);
+    console.error("portal API /sfos/portal/auth/resolve unavailable - continuing as not linked", error);
     return { accountId: null, permissions: [], isStaff: false, characters: [] };
   }
 }
 
-// Temporary escape hatch for standing up the very first admin while
-// portal-api is down/not deployed yet - there's otherwise no bootstrap path
-// (see portal-api's README), since /admin/* always re-derives
+// Temporary escape hatch for standing up the very first admin while the
+// portal API/game server is down or unreachable - there's otherwise no
+// bootstrap path (see the SFRP_Core_2026 repo's docs/
+// community-web-platform.md), since /admin/* always re-derives
 // sfos.staff.admin from the game database on every request, and won't trust
 // anything the website claims about permissions.
 //
 // This does NOT grant real admin authority by itself: it only lets the
 // listed Discord id past this site's own /admin gate (lib/requireAdmin.ts)
-// using the FiveM account id you provide - portal-api's admin endpoints
+// using the FiveM account id you provide - the portal API's admin routes
 // still independently re-check that exact account id against
 // permission_grants before doing anything, so this only "works" for an
 // account that's genuinely already staff there. Unset ADMIN_BYPASS_ACCOUNTS
-// once portal-api is reachable again; there's no reason to leave a
+// once the portal API is reachable again; there's no reason to leave a
 // hardcoded allowlist in production longer than necessary.
 //
 // Format: "discordId:accountId,discordId2:accountId2"
@@ -130,7 +133,7 @@ export const authOptions: NextAuthOptions = {
           },
         })
         .catch((error) => {
-          console.error("Failed to cache portal-api resolution on user", error);
+          console.error("Failed to cache portal API resolution on user", error);
         });
     },
   },

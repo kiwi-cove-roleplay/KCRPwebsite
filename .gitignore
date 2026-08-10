@@ -8,9 +8,6 @@ web/.next/
 web/out/
 web/tsconfig.tsbuildinfo
 
-# portal-api build output
-portal-api/dist/
-
 # logs
 npm-debug.log*
 pnpm-debug.log*

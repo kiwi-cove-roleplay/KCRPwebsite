@@ -12,8 +12,9 @@ const ADMIN_NAV = [
 ] as const;
 
 // Session-level gate (fast path) - see lib/requireAdmin.ts. The
-// authoritative check is portal-api's /admin/* router re-deriving
-// sfos.staff.admin from the DB on every single request underneath this.
+// authoritative check is the portal API's /sfos/portal/admin/* routes
+// re-deriving sfos.staff.admin from the DB on every single request
+// underneath this.
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   const actorAccountId = await requireAdminActor();
 

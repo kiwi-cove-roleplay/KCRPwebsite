@@ -4,7 +4,8 @@ import { AuthButton } from "@/components/AuthButton";
 import { Card } from "@/components/ui/Card";
 
 // Not linked from nav - kept from Phase 1 to verify the Discord login ->
-// portal-api /auth/resolve -> session chain still works end-to-end.
+// portal API /sfos/portal/auth/resolve -> session chain still works
+// end-to-end.
 export default async function DebugPage() {
   const session = await getServerSession(authOptions);
 

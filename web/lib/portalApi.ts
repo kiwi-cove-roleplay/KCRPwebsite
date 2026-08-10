@@ -1,7 +1,10 @@
-// Thin server-side client for the portal-api service. Never imported from a
-// "use client" component - PORTAL_API_SECRET must stay server-only, and the
-// browser never talks to portal-api directly (see portal-api's README for
-// the trust model this mirrors).
+// Thin server-side client for the community web platform's portal API,
+// which FXServer itself serves (resources/[core]/sfos-core/server/
+// http_router.lua's /sfos/portal/* routes in the SFRP_Core_2026 repo, see
+// docs/community-web-platform.md there) - there's no separate Node
+// service anymore. Never imported from a "use client" component -
+// PORTAL_API_SECRET must stay server-only, and the browser never talks to
+// this API directly (see that doc's trust model, section 3).
 
 export interface PortalCharacter {
   character_id: number;
@@ -30,7 +33,7 @@ export async function resolvePortalSession(discordId: string): Promise<PortalSes
   const baseUrl = requiredEnv("PORTAL_API_URL");
   const secret = requiredEnv("PORTAL_API_SECRET");
 
-  const res = await fetch(`${baseUrl}/auth/resolve`, {
+  const res = await fetch(`${baseUrl}/sfos/portal/auth/resolve`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -41,7 +44,7 @@ export async function resolvePortalSession(discordId: string): Promise<PortalSes
   });
 
   if (!res.ok) {
-    throw new Error(`portal-api /auth/resolve failed: ${res.status}`);
+    throw new Error(`portal API /sfos/portal/auth/resolve failed: ${res.status}`);
   }
 
   return (await res.json()) as PortalSession;
@@ -60,7 +63,7 @@ export async function submitDepartmentApplication(input: DepartmentApplicationIn
   const baseUrl = requiredEnv("PORTAL_API_URL");
   const secret = requiredEnv("PORTAL_API_SECRET");
 
-  const res = await fetch(`${baseUrl}/applications`, {
+  const res = await fetch(`${baseUrl}/sfos/portal/applications`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -71,7 +74,7 @@ export async function submitDepartmentApplication(input: DepartmentApplicationIn
   });
 
   if (!res.ok) {
-    throw new Error(`portal-api /applications failed: ${res.status}`);
+    throw new Error(`portal API /sfos/portal/applications failed: ${res.status}`);
   }
 }
 
@@ -92,12 +95,12 @@ export interface PortalSummary {
 
 // Fetched fresh on every /portal page load (not read off the session
 // token) so a new character or a reviewed application shows up without
-// forcing a re-login - see portal-api's /portal/summary comment.
+// forcing a re-login - see the router's POST /sfos/portal/summary handler.
 export async function fetchPortalSummary(accountId: number, discordId: string): Promise<PortalSummary> {
   const baseUrl = requiredEnv("PORTAL_API_URL");
   const secret = requiredEnv("PORTAL_API_SECRET");
 
-  const res = await fetch(`${baseUrl}/portal/summary`, {
+  const res = await fetch(`${baseUrl}/sfos/portal/summary`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -108,7 +111,7 @@ export async function fetchPortalSummary(accountId: number, discordId: string): 
   });
 
   if (!res.ok) {
-    throw new Error(`portal-api /portal/summary failed: ${res.status}`);
+    throw new Error(`portal API /sfos/portal/summary failed: ${res.status}`);
   }
 
   return (await res.json()) as PortalSummary;
@@ -119,17 +122,19 @@ export interface StatusSnapshot {
   updatedAt: string | null;
 }
 
-// GET /status is portal-api's one deliberately public route, but web still
-// proxies it (rather than having the browser hit portal-api directly) so
-// there's exactly one "browser never talks to portal-api" rule, no
-// exceptions - see portal-api's README auth model section.
+// GET /sfos/portal/status is the one deliberately public route (computed
+// live from GetOnDutyCounts() on the FXServer side, no push/cache), but web
+// still proxies it (rather than having the browser hit FXServer directly)
+// so there's exactly one "browser never talks to the portal API directly"
+// rule, no exceptions - see the SFRP_Core_2026 repo's docs/
+// community-web-platform.md, section 3's trust model.
 export async function fetchStatus(): Promise<StatusSnapshot> {
   const baseUrl = requiredEnv("PORTAL_API_URL");
 
-  const res = await fetch(`${baseUrl}/status`, { cache: "no-store" });
+  const res = await fetch(`${baseUrl}/sfos/portal/status`, { cache: "no-store" });
 
   if (!res.ok) {
-    throw new Error(`portal-api /status failed: ${res.status}`);
+    throw new Error(`portal API /sfos/portal/status failed: ${res.status}`);
   }
 
   return (await res.json()) as StatusSnapshot;

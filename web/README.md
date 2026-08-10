@@ -3,8 +3,10 @@
 Next.js (App Router, TypeScript) community website — landing/rules,
 player portal, PD/FENZ/HHSJ recruitment, and an admin dashboard, all as one
 app gated by session + permission checks. Deployed to Vercel. Talks to the
-game database only indirectly, through the sibling `portal-api` service
-(never holds a MySQL credential itself).
+game database only indirectly, through the portal API — which is FXServer
+itself (`resources/[core]/sfos-core/server/http_router.lua`'s
+`/sfos/portal/*` routes in the `SFRP_Core_2026` repo), not a separate
+Node process; `web` never holds a MySQL credential itself.
 
 ## Accounts and login
 
@@ -12,49 +14,51 @@ Signing in with Discord always creates a real website account, in this
 app's own Postgres database (`prisma/schema.prisma`, via
 `@next-auth/prisma-adapter`) — whether or not that Discord account has ever
 connected to the FiveM server. That's deliberate: the website's login
-doesn't depend on portal-api or the game server's MySQL being reachable.
+doesn't depend on the portal API or the game server's MySQL being
+reachable.
 
 Once signed in, `lib/auth.ts`'s `events.signIn` makes one best-effort call
-to portal-api's `POST /auth/resolve` to look up the player's FiveM
-`accountId`, permissions, staff status, and characters, and caches the
-result on that user's row. If portal-api is down, misconfigured, or the
-Discord account just hasn't connected to the server yet, this fails
-gracefully — you get a normal, working website account with those fields
-left at "not linked" (`accountId: null` in the session) until a later
-sign-in resolves successfully. Nothing about the portal-api round trip can
+to the portal API's `POST /sfos/portal/auth/resolve` to look up the
+player's FiveM `accountId`, permissions, staff status, and characters, and
+caches the result on that user's row. If the portal API is down,
+misconfigured, or the Discord account just hasn't connected to the server
+yet, this fails gracefully — you get a normal, working website account with
+those fields left at "not linked" (`accountId: null` in the session) until
+a later sign-in resolves successfully. Nothing about that round trip can
 block or break signing in to the website itself.
 
 ### Bootstrapping the first admin
 
-`/admin` is gated on `sfos.staff.admin`, which only ever comes from
-portal-api re-deriving it from the game database's `permission_grants`
-table — there's no bootstrap path there (see portal-api's README). If
-portal-api isn't deployed/reachable yet but you already know your account
-is staff in the game database, set `ADMIN_BYPASS_ACCOUNTS` (see
-`.env.example`) to get past this site's own `/admin` gate in the meantime.
-Sign out and back in for it to take effect (it's applied in
-`events.signIn`). This is explicitly temporary — portal-api's admin
-endpoints still independently re-check the real `permission_grants` table
-for that account id before doing anything, so it can't grant authority
-that doesn't already exist there; unset it once portal-api is reachable.
+`/admin` is gated on `sfos.staff.admin`, which only ever comes from the
+portal API re-deriving it from the game database's `permission_grants`
+table — there's no bootstrap path there (see the `SFRP_Core_2026` repo's
+`docs/community-web-platform.md`). If the portal API isn't reachable yet
+but you already know your account is staff in the game database, set
+`ADMIN_BYPASS_ACCOUNTS` (see `.env.example`) to get past this site's own
+`/admin` gate in the meantime. Sign out and back in for it to take effect
+(it's applied in `events.signIn`). This is explicitly temporary — the
+portal API's admin routes still independently re-check the real
+`permission_grants` table for that account id before doing anything, so it
+can't grant authority that doesn't already exist there; unset it once the
+portal API is reachable.
 
 **Phase 3 status**: public pages (landing, rules, how-to-join, department
 overview/detail), a live on-duty status board (`/status`, polling this
-app's own `/api/status`, which proxies portal-api's public `GET /status`),
-a recruitment application form per department (`/departments/[slug]/
-apply`, posting to `/api/applications`, which requires a signed-in,
-linked-account session and calls portal-api's `POST /applications`), and a
-player portal (`/portal`, linked from nav only while signed in) showing
-the signed-in player's account, characters, and their own application
-statuses — fetched fresh from portal-api's `POST /portal/summary` on every
-page load, not read off the session token, so a new character or a
-reviewed application shows up without a re-login. Department pages only
-link to `/apply` when that department's `recruitmentOpen` flag
-(`lib/departments.ts`) is `true` — flip it per department once you're
-ready to accept applications; the apply route itself works regardless,
-for testing. The Phase 1 debug readout (resolved account id/staff
-flag/permissions) moved to `/debug`, not linked from nav. The admin
-dashboard is Phase 4 — see the design doc.
+app's own `/api/status`, which proxies the portal API's public `GET
+/sfos/portal/status`), a recruitment application form per department
+(`/departments/[slug]/apply`, posting to `/api/applications`, which
+requires a signed-in, linked-account session and calls the portal API's
+`POST /sfos/portal/applications`), and a player portal (`/portal`, linked
+from nav only while signed in) showing the signed-in player's account,
+characters, and their own application statuses — fetched fresh from the
+portal API's `POST /sfos/portal/summary` on every page load, not read off
+the session token, so a new character or a reviewed application shows up
+without a re-login. Department pages only link to `/apply` when that
+department's `recruitmentOpen` flag (`lib/departments.ts`) is `true` — flip
+it per department once you're ready to accept applications; the apply
+route itself works regardless, for testing. The Phase 1 debug readout
+(resolved account id/staff flag/permissions) moved to `/debug`, not linked
+from nav. The admin dashboard is Phase 4 — see the design doc.
 
 ## Local setup
 
@@ -64,12 +68,14 @@ dashboard is Phase 4 — see the design doc.
    https://discord.com/developers/applications, OAuth2 tab: add redirect
    URI `http://localhost:3000/api/auth/callback/discord`, copy the Client
    ID and Client Secret.
-3. (Optional but recommended) Have `portal-api` running locally (see its
-   README) with a known `PORTAL_API_SECRET` — the site works without it,
-   but game-linked data (characters, staff status) won't resolve.
+3. (Optional but recommended) Have a local FXServer running the
+   `SFRP_Core_2026` repo's `sfos-core` resource, with `sfos_portal_secret`
+   set in `server.cfg` — the site works without it, but game-linked data
+   (characters, staff status) won't resolve.
 4. Copy `.env.example` to `.env.local` and fill in `DATABASE_URL`,
    `NEXTAUTH_SECRET` (any random string), the Discord client id/secret, and
-   `PORTAL_API_URL`/`PORTAL_API_SECRET` matching portal-api's.
+   `PORTAL_API_URL`/`PORTAL_API_SECRET` matching that FXServer's
+   `sfos_portal_secret` and loopback HTTP listener.
 5. `pnpm install` (from repo root) — this also runs `prisma generate`.
    Then create the website-accounts tables:
    `pnpm --filter sfos-web exec prisma migrate deploy`.
@@ -90,9 +96,10 @@ expected, not a bug.
    to `web`.
 3. Set the same env vars as `.env.example` in the Vercel project settings
    (`DATABASE_URL` = your Postgres connection string, `NEXTAUTH_URL` = your
-   real production domain, `PORTAL_API_URL` = your `portal-api`'s domain
-   behind its reverse proxy — see that service's README for the Caddy
-   setup).
+   real production domain, `PORTAL_API_URL` = the domain in front of the
+   game server's loopback portal-API listener, behind its Caddy TLS reverse
+   proxy — see the `SFRP_Core_2026` repo's `docs/community-web-platform.md`
+   section 3 for that setup).
 4. Run `prisma migrate deploy` against that `DATABASE_URL` once (locally,
    with it set in your shell, or via a one-off Vercel build command) to
    create the website-accounts tables before the first deploy.

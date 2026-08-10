@@ -1,8 +1,10 @@
-// Thin server-side client for portal-api's /admin/* routes. Only ever
-// called from web's own /api/admin/* route handlers, which derive
-// actorAccountId from the caller's own session (session.accountId) - never
-// from client-submitted input, since portal-api trusts whatever account id
-// arrives in x-sfos-actor-account-id to re-derive that account's current
+// Thin server-side client for the portal API's /sfos/portal/admin/* routes
+// (served by FXServer itself - see resources/[core]/sfos-core/server/
+// http_router.lua in the SFRP_Core_2026 repo). Only ever called from web's
+// own /api/admin/* route handlers, which derive actorAccountId from the
+// caller's own session (session.accountId) - never from client-submitted
+// input, since the router trusts whatever account id arrives in
+// x-sfos-actor-account-id to re-derive that account's current
 // sfos.staff.admin permission. If a browser could set that header directly,
 // it could claim to be any account; routing everything through this
 // server-only module (never imported from a "use client" component) is
@@ -21,7 +23,7 @@ async function adminFetch<T>(actorAccountId: number, path: string, init: Request
   const baseUrl = requiredEnv("PORTAL_API_URL");
   const secret = requiredEnv("PORTAL_API_SECRET");
 
-  const res = await fetch(`${baseUrl}/admin${path}`, {
+  const res = await fetch(`${baseUrl}/sfos/portal/admin${path}`, {
     ...init,
     headers: {
       "Content-Type": "application/json",
@@ -33,7 +35,7 @@ async function adminFetch<T>(actorAccountId: number, path: string, init: Request
   });
 
   if (!res.ok) {
-    throw new Error(`portal-api /admin${path} failed: ${res.status}`);
+    throw new Error(`portal API /sfos/portal/admin${path} failed: ${res.status}`);
   }
 
   return (await res.json()) as T;
