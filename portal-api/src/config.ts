@@ -25,4 +25,12 @@ export const config = {
   // about here.
   portalApiSecret: required("PORTAL_API_SECRET"),
   port: Number(process.env.PORT ?? 30130),
+  // Optional - push website recruitment events (application submitted/
+  // accepted/rejected) to the discord-bot's /log HTTP server. Leave either
+  // value blank to disable; the secret must match the bot's
+  // FXSERVER_LOG_SECRET. See discordLog.ts.
+  discordLog: {
+    url: process.env.DISCORD_LOG_URL ?? "",
+    secret: process.env.DISCORD_LOG_SECRET ?? "",
+  },
 };

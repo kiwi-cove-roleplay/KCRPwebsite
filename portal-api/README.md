@@ -9,6 +9,18 @@ server-side code is the only intended caller.
 
 Routes:
 
+- `GET /` — **public** landing page. What a person sees opening the API's
+  base URL (e.g. `https://api.kcrp.nz/`) in a browser: a small info page
+  showing whether the service can reach the **game MySQL database** (a green
+  "Online" badge / "Connected", or an amber "Degraded" badge / "Unreachable"
+  when MySQL is down), its version/uptime, whether live status has been
+  reported, and the public endpoints. Content-negotiated — returns JSON
+  (with `status: "online" | "degraded"` and `database.connected`) for clients
+  sending `Accept: application/json`. Exposes nothing behind the shared secret.
+- `GET /health` — **public** liveness probe. Always returns `200` while the
+  process is up (deliberately *not* gated on the database, so a monitor
+  won't restart-loop portal-api during a MySQL outage); the body's
+  `database` field reports `"connected"` / `"unreachable"` for information.
 - `POST /auth/resolve` — used by `web`'s NextAuth sign-in flow to look up
   an account by Discord id.
 - `POST /applications` — writes a recruitment application row to

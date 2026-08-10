@@ -3,8 +3,7 @@
 Kiwi Cove Roleplay's public website, player portal, staff admin dashboard,
 and emergency-department (PD/FENZ/HHSJ) recruitment + live status portal.
 
-A pnpm workspace with two deployable services, each owning its own
-database:
+A pnpm workspace with three deployable services:
 
 - [`web/`](web/) — Next.js (App Router) app, deployed to Vercel. Public
   site, player portal, admin dashboard, all gated by a Discord-OAuth
@@ -19,6 +18,13 @@ database:
   with a shared secret. `web` calls it once per sign-in as a best-effort
   enrichment step (game account id, permissions, staff status, characters)
   — it's never required for the website login itself to succeed.
+- [`discord-bot/`](discord-bot/) — Express + discord.js process, ported from
+  the game-server repo (`SFRP_Core`)'s `services/discord-bot` and deployed on
+  the same game-server host (it needs direct MySQL access). Syncs Discord
+  roles into `permission_grants`, offers staff slash commands, and — for the
+  website — posts recruitment-application events (pushed by `portal-api`) and
+  keeps a live on-duty status board (polled from `portal-api`'s public
+  `/status`) in Discord. See its README.
 
 See each service's README for local setup and deployment. This repo is
 intentionally separate from the FiveM/game-server (`SFRP_Core`) repo — see
@@ -32,6 +38,7 @@ was scaffolded from.
 pnpm install
 pnpm --filter sfos-portal-api dev   # terminal 1
 pnpm --filter sfos-web dev          # terminal 2
+pnpm --filter sfos-discord-bot dev  # terminal 3 (optional, needs a Discord bot + game MySQL)
 ```
 
 Each service needs its own `.env`/`.env.local` — copy `.env.example` in

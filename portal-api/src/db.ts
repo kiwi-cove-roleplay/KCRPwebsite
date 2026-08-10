@@ -23,6 +23,31 @@ export const pool = mysql.createPool({
 // is only typed on the underlying callback-style pool.
 pool.pool.on("error", (err) => logError("db pool", err));
 
+export interface DbPingResult {
+  connected: boolean;
+  // mysql2/Node error code on failure (e.g. "ECONNREFUSED", "ER_ACCESS_DENIED",
+  // "ER_BAD_DB_ERROR", "ETIMEDOUT"). Undefined when connected. This is the
+  // category only - the full error (with host:port) still goes to the log,
+  // never to the public pages.
+  code?: string;
+}
+
+// Cheap liveness probe against the game MySQL database - is this service
+// actually able to reach it? Runs a trivial `SELECT 1` (no table touched) so
+// it works before any migrations exist and costs almost nothing. Never
+// throws: a failed connection resolves to { connected: false } so callers
+// (the / and /health pages) can report status rather than error out.
+export async function pingDatabase(): Promise<DbPingResult> {
+  try {
+    await pool.query("SELECT 1");
+    return { connected: true };
+  } catch (err) {
+    logError("db ping", err);
+    const rawCode = (err as { code?: unknown }).code;
+    return { connected: false, code: typeof rawCode === "string" ? rawCode : "UNKNOWN" };
+  }
+}
+
 export interface AccountSummary {
   account_id: number;
   fivem_username: string;

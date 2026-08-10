@@ -1,6 +1,8 @@
 import express from "express";
 import { config } from "./config.js";
-import { logError } from "./logger.js";
+import { logDebug, logError, logInfo } from "./logger.js";
+import { notifyDiscordLog } from "./discordLog.js";
+import { renderLandingPage, type ServiceInfo } from "./landing.js";
 import {
   getAccountByDiscordId,
   getAllPermissions,
@@ -9,6 +11,7 @@ import {
   hasPermission,
   insertDepartmentApplication,
   isStaff,
+  pingDatabase,
   type ApplicationStatus,
   type DepartmentCode,
 } from "./db.js";
@@ -39,8 +42,68 @@ import { getStatusSnapshot, setStatusSnapshot } from "./statusStore.js";
 const app = express();
 app.use(express.json());
 
-app.get("/health", (_req, res) => {
-  res.json({ ok: true });
+// One line per request on completion: method, path, status, and duration.
+// Gated behind DEBUG (config.debug) so production stays quiet unless someone
+// is actively troubleshooting - otherwise the ~60s /status/report pushes and
+// the website's /status polling would flood the console.
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on("finish", () => {
+    logDebug(`${req.method} ${req.originalUrl} -> ${res.statusCode} (${Date.now() - start}ms)`);
+  });
+  next();
+});
+
+// When this API's process started - used only for the root page's uptime.
+const START_TIME = Date.now();
+const SERVICE_VERSION = "0.1.0";
+
+// Public root - what a person sees opening https://api.kcrp.nz/ in a browser.
+// Content-negotiated: a friendly HTML info page for browsers, JSON for API
+// clients that ask for it (Accept: application/json). Exposes nothing behind
+// the shared secret; it only names the public endpoints and confirms uptime.
+app.get("/", async (req, res) => {
+  const snapshot = getStatusSnapshot();
+  const dbPing = await pingDatabase();
+  const info: ServiceInfo = {
+    service: "sfos-portal-api",
+    // Process is up either way; "degraded" signals it can't reach the game DB.
+    status: dbPing.connected ? "online" : "degraded",
+    version: SERVICE_VERSION,
+    uptimeSeconds: Math.floor((Date.now() - START_TIME) / 1000),
+    time: new Date().toISOString(),
+    database: { connected: dbPing.connected, reason: dbPing.code },
+    liveStatus: {
+      available: snapshot?.data != null,
+      updatedAt: snapshot?.updatedAt ?? null,
+    },
+    endpoints: {
+      public: ["GET /health", "GET /status"],
+      authenticated:
+        "All other endpoints require the x-sfos-portal-secret header and are for server-to-server use only.",
+    },
+  };
+
+  if (req.accepts(["html", "json"]) === "json") {
+    res.json(info);
+    return;
+  }
+  res.type("html").send(renderLandingPage(info));
+});
+
+// Liveness - always 200 while the process is up, deliberately NOT gated on
+// the database. A process monitor pointed here must not restart-loop portal-
+// api during a MySQL outage (a restart can't fix the DB, and the public
+// /status plus best-effort website enrichment keep working). The `database`
+// field reports reachability for informational use; the / landing page is
+// where a DB outage shows as a visible "Degraded" state.
+app.get("/health", async (_req, res) => {
+  const dbPing = await pingDatabase();
+  res.json({
+    ok: true,
+    database: dbPing.connected ? "connected" : "unreachable",
+    ...(dbPing.connected ? {} : { reason: dbPing.code }),
+  });
 });
 
 // Public on purpose (design doc section 5) - this is the live on-duty
@@ -127,6 +190,12 @@ app.post("/applications", async (req, res) => {
   try {
     const id = await insertDepartmentApplication(payload);
     res.json({ ok: true, id });
+    // Fire-and-forget Discord notification - never blocks or fails the write.
+    notifyDiscordLog("application_submitted", {
+      Application: `#${id}`,
+      Department: payload.department,
+      Applicant: payload.discordUsername,
+    });
   } catch (err) {
     logError("/applications", err);
     res.status(500).json({ ok: false, error: "internal_error" });
@@ -395,10 +464,16 @@ adminRouter.post("/applications/:id", async (req, res) => {
   await updateApplicationStatus(id, status, actorAccountId);
   await logStaffAction(actorAccountId, `application_${status}`, "application", String(id), null);
   res.json(await listApplications());
+  // Fire-and-forget Discord notification - after the response, never blocks it.
+  notifyDiscordLog(`application_${status}`, {
+    Application: `#${id}`,
+    "Reviewed by": `account #${actorAccountId}`,
+  });
 });
 
 app.use("/admin", adminRouter);
 
 app.listen(config.port, () => {
-  console.log(`[sfos-portal-api] listening on port ${config.port}`);
+  logInfo(`listening on port ${config.port}`);
+  logDebug("DEBUG enabled - logging every request");
 });
