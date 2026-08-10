@@ -97,6 +97,24 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   secret: process.env.NEXTAUTH_SECRET,
+  pages: {
+    // Without this, failed sign-ins hit next-auth's built-in generic error
+    // screen, which has no branding and (more importantly) no visibility
+    // into the underlying error code from a Vercel request log alone.
+    error: "/auth/error",
+  },
+  logger: {
+    // next-auth's default logger only prints to stdout/stderr with a plain
+    // console.error, but the second arg it's given is often a full Error
+    // (or an object wrapping one) with the real cause - e.g. an
+    // OAuthCallbackError's `error.message` names the actual upstream
+    // problem (bad client secret, redirect_uri mismatch, etc), which never
+    // makes it into the "?error=Callback" query param the browser sees.
+    error(code, metadata) {
+      const cause = metadata instanceof Error ? metadata.message : metadata;
+      console.error(`[next-auth] ${code}`, cause);
+    },
+  },
   events: {
     // Fires once per actual sign-in (not on every session read) - the same
     // cadence the old JWT-based `if (account && profile)` gate used, just
