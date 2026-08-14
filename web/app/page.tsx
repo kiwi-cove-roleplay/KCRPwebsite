@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getServerSession } from "next-auth";
-import { Compass, MapPin, Radio, ScrollText, ShieldCheck } from "lucide-react";
+import { BookOpen, Compass, MapPin, Radio, ScrollText, ShieldCheck } from "lucide-react";
 import { authOptions } from "@/lib/auth";
 import { buttonClasses } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -22,6 +22,13 @@ const QUICK_LINKS = [
     body: "What's expected once you're in.",
     icon: ScrollText,
     tone: "sand",
+  },
+  {
+    href: "/guide",
+    title: "Community Guide",
+    body: "Everything you need to know to play.",
+    icon: BookOpen,
+    tone: "moss",
   },
   {
     href: "/departments",
