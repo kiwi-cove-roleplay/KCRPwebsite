@@ -18,6 +18,7 @@ export const metadata: Metadata = {
 
 const NAV_LINKS = [
   { href: "/rules", label: "Rules" },
+  { href: "/guide", label: "Guide" },
   { href: "/join", label: "How to Join" },
   { href: "/departments", label: "Departments" },
   { href: "/status", label: "Live Status" },
@@ -28,6 +29,7 @@ const FOOTER_SECTIONS = [
     heading: "Community",
     links: [
       { href: "/rules", label: "Rules" },
+      { href: "/guide", label: "Guide" },
       { href: "/join", label: "How to Join" },
       { href: "/departments", label: "Departments" },
       { href: "/status", label: "Live Status" },
